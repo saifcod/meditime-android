@@ -1,0 +1,79 @@
+<resources>
+    <string name="app_name">MediTime</string>
+    <string name="tagline">Never Miss Your Medicine Again.</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_medicines">Medicines</string>
+    <string name="nav_schedule">Schedule</string>
+    <string name="nav_history">History</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Greetings -->
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+
+    <!-- Dashboard -->
+    <string name="summary_total">Scheduled</string>
+    <string name="summary_completed">Taken</string>
+    <string name="summary_upcoming">Upcoming</string>
+    <string name="summary_missed">Missed</string>
+    <string name="next_medicine_header">YOUR NEXT MEDICINE</string>
+    <string name="no_upcoming_doses">No more doses scheduled for today!</string>
+    <string name="btn_take_dose">I HAVE TAKEN IT</string>
+    <string name="btn_skip_dose">Skip</string>
+    <string name="btn_snooze">Snooze 10m</string>
+    <string name="today_timeline">Today\'s Medication Timeline</string>
+    <string name="empty_timeline">No medicines added yet. Tap + to add your first medicine.</string>
+
+    <!-- Medicine Actions -->
+    <string name="add_medicine">Add Medicine</string>
+    <string name="edit_medicine">Edit Medicine</string>
+    <string name="medicine_name">Medicine Name</string>
+    <string name="medicine_name_hint">e.g., Atorvastatin, Metformin</string>
+    <string name="brand_name">Brand Name (Optional)</string>
+    <string name="generic_name">Generic Name (Optional)</string>
+    <string name="medicine_type">Medicine Type</string>
+    <string name="strength">Strength / Dosage (e.g., 500mg)</string>
+    <string name="dose_amount">Dose per Intake</string>
+    <string name="dose_amount_hint">e.g., 1 Tablet, 5 ml, 2 Puffs</string>
+    <string name="food_instruction">Food Instructions</string>
+    <string name="notes">Notes or Special Advice</string>
+    <string name="frequency">Frequency</string>
+    <string name="select_times">Select Reminder Times</string>
+    <string name="stock_tracking">Stock &amp; Refill Tracking</string>
+    <string name="current_stock">Current Stock Quantity</string>
+    <string name="threshold_stock">Low Stock Warning At</string>
+
+    <!-- History & Status -->
+    <string name="status_taken">Taken</string>
+    <string name="status_missed">Missed</string>
+    <string name="status_skipped">Skipped</string>
+    <string name="status_scheduled">Upcoming</string>
+
+    <!-- Senior Mode -->
+    <string name="senior_mode_title">Senior Mode (High Legibility)</string>
+    <string name="senior_mode_desc">Extra large text, high contrast buttons, simplified screens, and audio alerts</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_name">Medication Reminders</string>
+    <string name="notification_channel_desc">Timely alerts for taking prescribed medicine</string>
+    <string name="notification_title">Time to Take Your Medicine!</string>
+    <string name="missed_dose_warning">You missed a scheduled reminder. Follow your prescription instructions or consult your doctor or pharmacist.</string>
+
+    <!-- Prescriptions -->
+    <string name="prescriptions_title">Prescriptions</string>
+    <string name="add_prescription">Add Prescription</string>
+    <string name="doctor_name">Doctor Name</string>
+    <string name="clinic_name">Clinic / Hospital</string>
+    <string name="prescription_date">Date Issued</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="backup_restore">Backup &amp; Export Data</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="battery_optimization">Battery Optimization Notice</string>
+    <string name="about_app">About MediTime</string>
+    <string name="version_info">Version 1.0.0 (Global Free Edition)</string>
+</resources>

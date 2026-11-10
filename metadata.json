@@ -1,0 +1,6 @@
+{
+  "name": "MediTime",
+  "description": "Smart Medication Management – Never miss your medicine again. Offline-first, elderly-friendly reminders and health tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
