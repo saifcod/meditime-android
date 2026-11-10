@@ -1,5 +1,6 @@
 package com.example.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -8,43 +9,53 @@ import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
     primary = DarkMedicalBluePrimary,
-    onPrimary = Color(0xFF00296B),
-    primaryContainer = Color(0xFF003E9C),
-    onPrimaryContainer = Color(0xFFD6E4FF),
-    secondary = MedicalTealSecondary,
-    onSecondary = Color.White,
+    onPrimary = DeepNavyDark,
+    primaryContainer = DarkMedicalBlueContainer,
+    onPrimaryContainer = Color(0xFFDCE7FF),
+    secondary = MediTeal,
+    onSecondary = PureWhite,
+    secondaryContainer = Color(0xFF0F4D45),
+    onSecondaryContainer = Color(0xFF99F6E4),
+    tertiary = StatusUpcoming,
     background = DarkMedicalBackground,
     onBackground = DarkMedicalText,
     surface = DarkMedicalSurface,
     onSurface = DarkMedicalText,
     surfaceVariant = DarkMedicalSurfaceVariant,
     onSurfaceVariant = DarkMedicalTextMuted,
-    error = Color(0xFFFFB4AB),
-    errorContainer = Color(0xFF93000A)
+    outline = DarkBorderSubtle,
+    error = StatusMissed,
+    errorContainer = Color(0xFF5A1517),
+    onError = PureWhite,
+    onErrorContainer = Color(0xFFFFD1D1)
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = MedicalBluePrimary,
-    onPrimary = MedicalBlueOnPrimary,
-    primaryContainer = MedicalBlueContainer,
-    onPrimaryContainer = MedicalBlueOnContainer,
-    secondary = MedicalTealSecondary,
-    onSecondary = Color.White,
+    primary = RoyalBlue,
+    onPrimary = PureWhite,
+    primaryContainer = SoftBlue,
+    onPrimaryContainer = DeepNavy,
+    secondary = MediTeal,
+    onSecondary = PureWhite,
     secondaryContainer = MedicalTealContainer,
     onSecondaryContainer = MedicalTealOnContainer,
-    background = CleanBackground,
-    onBackground = NavyTypography,
+    tertiary = StatusUpcoming,
+    background = LightBackground,
+    onBackground = DeepNavy,
     surface = CleanSurface,
-    onSurface = NavyTypography,
+    onSurface = DeepNavy,
     surfaceVariant = CleanSurfaceVariant,
     onSurfaceVariant = NavyTypographyMuted,
-    error = HealthError,
-    errorContainer = HealthErrorContainer
+    outline = BorderSubtle,
+    error = StatusMissed,
+    errorContainer = StatusMissedContainer,
+    onError = PureWhite,
+    onErrorContainer = Color(0xFF7F1D1D)
 )
 
 @Composable
 fun MediTimeTheme(
-    darkTheme: Boolean = false, // Defaults strictly to false (Light Mode) as requested
+    darkTheme: Boolean = false, // Defaults to Light Mode as per user specification
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme

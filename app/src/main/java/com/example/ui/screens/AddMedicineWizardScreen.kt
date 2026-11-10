@@ -1,28 +1,37 @@
 package com.example.ui.screens
 
 import android.app.TimePickerDialog
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entities.Medicine
 import com.example.ui.theme.*
+import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,32 +76,33 @@ fun AddMedicineWizardScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text(
-                            text = "Add Medicine",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp
-                        )
-                        Text(
-                            text = "Step $step of 3",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    Text(
+                        text = "Add Medicine",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 20.sp
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = {
                         if (step > 1) step-- else onDismiss()
                     }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = if (step > 1) Icons.Default.ArrowBack else Icons.Default.Close,
+                            contentDescription = "Back"
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         },
         bottomBar = {
             Surface(
-                tonalElevation = 4.dp,
+                tonalElevation = 6.dp,
+                color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
                 modifier = Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()
@@ -100,34 +110,40 @@ fun AddMedicineWizardScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (step > 1) {
                         OutlinedButton(
                             onClick = { step-- },
                             shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier.height(56.dp)
+                            modifier = Modifier
+                                .height(52.dp)
+                                .weight(1f)
                         ) {
-                            Text("Back")
+                            Icon(Icons.Default.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Back", fontWeight = FontWeight.Bold)
                         }
+                        Spacer(modifier = Modifier.width(12.dp))
                     } else {
                         OutlinedButton(
                             onClick = onDismiss,
                             shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier.height(56.dp)
+                            modifier = Modifier
+                                .height(52.dp)
+                                .weight(1f)
                         ) {
-                            Text("Cancel")
+                            Text("Cancel", fontWeight = FontWeight.Bold)
                         }
+                        Spacer(modifier = Modifier.width(12.dp))
                     }
 
                     Button(
                         onClick = {
                             if (step < 3) {
-                                if (name.isBlank()) {
-                                    // simple validation
-                                    return@Button
-                                }
+                                if (name.isBlank()) return@Button
                                 step++
                             } else {
                                 val stockQty = stockQuantityStr.toIntOrNull() ?: 0
@@ -151,14 +167,24 @@ fun AddMedicineWizardScreen(
                         shape = RoundedCornerShape(16.dp),
                         enabled = name.isNotBlank(),
                         modifier = Modifier
-                            .height(56.dp)
+                            .height(52.dp)
+                            .weight(1.5f)
                             .testTag("btn_wizard_next"),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = RoyalBlue,
+                            contentColor = PureWhite
+                        )
                     ) {
                         Text(
                             text = if (step == 3) "Save Medicine" else "Continue",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
+                            fontSize = 15.sp
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(
+                            imageVector = if (step == 3) Icons.Default.Check else Icons.Default.ArrowForward,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 }
@@ -170,21 +196,27 @@ fun AddMedicineWizardScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp)
+                .padding(horizontal = 20.dp, vertical = 14.dp)
         ) {
+            // Modern Step Progress Stepper
+            WizardStepIndicator(currentStep = step)
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             when (step) {
                 1 -> {
-                    // STEP 1: Basic Information
+                    // STEP 1: Medicine Details
                     Text(
                         text = "Medicine Details",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Enter the name and form prescribed by your doctor.",
+                        text = "Enter medicine name and form as prescribed by your doctor.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 16.dp)
+                        modifier = Modifier.padding(bottom = 18.dp)
                     )
 
                     OutlinedTextField(
@@ -192,144 +224,188 @@ fun AddMedicineWizardScreen(
                         onValueChange = { name = it },
                         label = { Text("Medicine Name *") },
                         placeholder = { Text("e.g. Paracetamol, Atorvastatin") },
+                        leadingIcon = { Icon(Icons.Default.Medication, contentDescription = null, tint = RoyalBlue) },
                         singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("input_medicine_name")
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    OutlinedTextField(
-                        value = strength,
-                        onValueChange = { strength = it },
-                        label = { Text("Strength / Dosage (Optional)") },
-                        placeholder = { Text("e.g. 500mg, 10mg, 2.5ml") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = strength,
+                            onValueChange = { strength = it },
+                            label = { Text("Strength") },
+                            placeholder = { Text("e.g. 500mg, 10mg") },
+                            leadingIcon = { Icon(Icons.Default.Scale, contentDescription = null, tint = RoyalBlue) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.weight(1f)
+                        )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = doseInstruction,
+                            onValueChange = { doseInstruction = it },
+                            label = { Text("Dose per Intake") },
+                            placeholder = { Text("e.g. 1 Tablet") },
+                            leadingIcon = { Icon(Icons.Default.Check, contentDescription = null, tint = StatusTaken) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
 
-                    OutlinedTextField(
-                        value = doseInstruction,
-                        onValueChange = { doseInstruction = it },
-                        label = { Text("Dose per Intake") },
-                        placeholder = { Text("e.g. 1 Tablet, 2 Drops, 1 Puff") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(18.dp))
 
                     Text(
                         text = "Medicine Form",
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(bottom = 10.dp)
                     )
 
-                    val types = listOf("Tablet", "Capsule", "Syrup", "Injection", "Drops", "Inhaler", "Cream", "Other")
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        types.take(4).forEach { t ->
-                            FilterChip(
-                                selected = medicineType == t,
-                                onClick = { medicineType = t },
-                                label = { Text(t, fontSize = 12.sp) }
-                            )
-                        }
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        types.drop(4).forEach { t ->
-                            FilterChip(
-                                selected = medicineType == t,
-                                onClick = { medicineType = t },
-                                label = { Text(t, fontSize = 12.sp) }
-                            )
+                    val formTypes = listOf(
+                        Triple("Tablet", Icons.Default.Medication, "Pill/Tab"),
+                        Triple("Capsule", Icons.Default.LocalPharmacy, "Gel cap"),
+                        Triple("Syrup", Icons.Default.WaterDrop, "Liquid"),
+                        Triple("Injection", Icons.Default.Vaccines, "Needle"),
+                        Triple("Drops", Icons.Default.Opacity, "Eye/Ear"),
+                        Triple("Inhaler", Icons.Default.Air, "Breath"),
+                        Triple("Cream", Icons.Default.Spa, "Ointment"),
+                        Triple("Other", Icons.Default.MedicalServices, "Custom")
+                    )
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (i in 0 until formTypes.size step 2) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                FormTypeCard(
+                                    name = formTypes[i].first,
+                                    icon = formTypes[i].second,
+                                    desc = formTypes[i].third,
+                                    isSelected = medicineType == formTypes[i].first,
+                                    onSelect = { medicineType = formTypes[i].first },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                if (i + 1 < formTypes.size) {
+                                    FormTypeCard(
+                                        name = formTypes[i + 1].first,
+                                        icon = formTypes[i + 1].second,
+                                        desc = formTypes[i + 1].third,
+                                        isSelected = medicineType == formTypes[i + 1].first,
+                                        onSelect = { medicineType = formTypes[i + 1].first },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(18.dp))
 
                     OutlinedTextField(
                         value = notes,
                         onValueChange = { notes = it },
                         label = { Text("Doctor's Notes (Optional)") },
-                        placeholder = { Text("e.g. Prescribed for high blood pressure") },
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        placeholder = { Text("e.g. Prescribed for 14 days, take with plenty of water") },
+                        leadingIcon = { Icon(Icons.Default.NoteAlt, contentDescription = null, tint = RoyalBlue) },
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 2
                     )
                 }
 
                 2 -> {
-                    // STEP 2: Timing & Frequency
+                    // STEP 2: Reminder Schedule
                     Text(
                         text = "Reminder Schedule",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Choose how often and at what exact time to receive reminders.",
+                        text = "Configure exact reminder times with smart audible alarms.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 16.dp)
+                        modifier = Modifier.padding(bottom = 18.dp)
                     )
 
                     val frequencies = listOf("Once daily", "Twice daily", "Three times daily", "Custom times")
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        frequencies.take(2).forEach { f ->
-                            FilterChip(
-                                selected = frequency == f,
-                                onClick = {
-                                    frequency = f
-                                    if (f == "Once daily") reminderTimes = mutableListOf(Pair(8, 0))
-                                    if (f == "Twice daily") reminderTimes = mutableListOf(Pair(8, 0), Pair(20, 0))
-                                },
-                                label = { Text(f) }
-                            )
-                        }
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        frequencies.drop(2).forEach { f ->
-                            FilterChip(
-                                selected = frequency == f,
-                                onClick = {
-                                    frequency = f
-                                    if (f == "Three times daily") reminderTimes = mutableListOf(Pair(8, 0), Pair(14, 0), Pair(20, 0))
-                                },
-                                label = { Text(f) }
-                            )
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        frequencies.chunked(2).forEach { chunk ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                chunk.forEach { f ->
+                                    val isSelected = frequency == f
+                                    Card(
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = if (isSelected) SoftBlue else MaterialTheme.colorScheme.surface
+                                        ),
+                                        border = BorderStroke(
+                                            if (isSelected) 1.5.dp else 1.dp,
+                                            if (isSelected) RoyalBlue else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                        ),
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clickable {
+                                                frequency = f
+                                                when (f) {
+                                                    "Once daily" -> reminderTimes = mutableListOf(Pair(8, 0))
+                                                    "Twice daily" -> reminderTimes = mutableListOf(Pair(8, 0), Pair(20, 0))
+                                                    "Three times daily" -> reminderTimes = mutableListOf(Pair(8, 0), Pair(14, 0), Pair(20, 0))
+                                                }
+                                            }
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(14.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            RadioButton(
+                                                selected = isSelected,
+                                                onClick = null,
+                                                colors = RadioButtonDefaults.colors(selectedColor = RoyalBlue)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = f,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                fontSize = 14.sp,
+                                                color = if (isSelected) DeepNavy else MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(22.dp))
 
                     Text(
-                        text = "Reminder Times",
+                        text = "Scheduled Alarm Times",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
                     reminderTimes.forEachIndexed { index, (h, m) ->
                         Card(
-                            shape = RoundedCornerShape(14.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp)
@@ -337,7 +413,7 @@ fun AddMedicineWizardScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(14.dp),
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -345,16 +421,38 @@ fun AddMedicineWizardScreen(
                                     set(Calendar.HOUR_OF_DAY, h)
                                     set(Calendar.MINUTE, m)
                                 }
-                                val formatted = java.text.SimpleDateFormat("h:mm a", Locale.getDefault()).format(cal.time)
+                                val formatted = SimpleDateFormat("h:mm a", Locale.getDefault()).format(cal.time)
 
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.Alarm, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = SoftBlue,
+                                        modifier = Modifier.size(40.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                Icons.Default.Alarm,
+                                                contentDescription = null,
+                                                tint = RoyalBlue,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
                                     Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = "Dose ${index + 1}: $formatted",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 16.sp
-                                    )
+                                    Column {
+                                        Text(
+                                            text = "Dose ${index + 1}",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = formatted,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            fontSize = 17.sp,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
                                 }
 
                                 Row {
@@ -371,7 +469,7 @@ fun AddMedicineWizardScreen(
                                             false
                                         ).show()
                                     }) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Edit Time", tint = MaterialTheme.colorScheme.primary)
+                                        Icon(Icons.Default.Edit, contentDescription = "Edit Time", tint = RoyalBlue)
                                     }
                                     if (reminderTimes.size > 1) {
                                         IconButton(onClick = {
@@ -379,7 +477,7 @@ fun AddMedicineWizardScreen(
                                             copy.removeAt(index)
                                             reminderTimes = copy
                                         }) {
-                                            Icon(Icons.Default.Delete, contentDescription = "Delete Time", tint = MaterialTheme.colorScheme.error)
+                                            Icon(Icons.Default.DeleteOutline, contentDescription = "Delete Time", tint = MaterialTheme.colorScheme.error)
                                         }
                                     }
                                 }
@@ -387,84 +485,157 @@ fun AddMedicineWizardScreen(
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(10.dp))
+
                     TextButton(
                         onClick = {
                             val copy = reminderTimes.toMutableList()
                             copy.add(Pair(12, 0))
                             reminderTimes = copy
                         },
-                        modifier = Modifier.padding(top = 8.dp)
+                        colors = ButtonDefaults.textButtonColors(contentColor = RoyalBlue)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Add Another Dose Time")
+                        Text("Add Another Dose Time", fontWeight = FontWeight.Bold)
                     }
                 }
 
                 3 -> {
-                    // STEP 3: Food Instruction & Stock
+                    // STEP 3: Instructions & Inventory
                     Text(
                         text = "Instructions & Inventory",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Set food timing and optionally track tablet stock for refill reminders.",
+                        text = "Specify meal instructions and optional stock refill tracking.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 16.dp)
+                        modifier = Modifier.padding(bottom = 18.dp)
                     )
 
                     Text(
                         text = "Food Instructions",
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
+                        color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    val foodOptions = listOf("Before food", "After food", "With food", "Empty stomach", "No specific instruction")
-                    foodOptions.forEach { opt ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { foodInstruction = opt }
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = foodInstruction == opt,
-                                onClick = { foodInstruction = opt }
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(opt, fontSize = 16.sp)
+                    val foodOptions = listOf(
+                        Pair("Before food", Icons.Default.Restaurant),
+                        Pair("After food", Icons.Default.RestaurantMenu),
+                        Pair("With food", Icons.Default.DinnerDining),
+                        Pair("Empty stomach", Icons.Default.WaterDrop),
+                        Pair("No specific instruction", Icons.Default.CheckCircle)
+                    )
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        foodOptions.forEach { (opt, icon) ->
+                            val isSelected = foodInstruction == opt
+                            Card(
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isSelected) SoftBlue else MaterialTheme.colorScheme.surface
+                                ),
+                                border = BorderStroke(
+                                    if (isSelected) 1.5.dp else 1.dp,
+                                    if (isSelected) RoyalBlue else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { foodInstruction = opt }
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(
+                                        selected = isSelected,
+                                        onClick = { foodInstruction = opt },
+                                        colors = RadioButtonDefaults.colors(selectedColor = RoyalBlue)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = null,
+                                        tint = if (isSelected) RoyalBlue else NavyTypographyMuted,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text(
+                                        text = opt,
+                                        fontSize = 15.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected) DeepNavy else MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(22.dp))
 
+                    // Inventory Tracking Card
                     Card(
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+                        Column(modifier = Modifier.padding(18.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text("Track Stock & Refills", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                    Text("Alert me when tablets run low", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = if (isStockTrackingEnabled) StatusTakenContainer else CleanSurfaceVariant,
+                                        modifier = Modifier.size(42.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                Icons.Default.Inventory2,
+                                                contentDescription = null,
+                                                tint = if (isStockTrackingEnabled) StatusTaken else NavyTypographyMuted,
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = "Track Stock & Refills",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 16.sp,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = "Get notified before pills run out",
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
                                 Switch(
                                     checked = isStockTrackingEnabled,
-                                    onCheckedChange = { isStockTrackingEnabled = it }
+                                    onCheckedChange = { isStockTrackingEnabled = it },
+                                    colors = SwitchDefaults.colors(checkedThumbColor = PureWhite, checkedTrackColor = RoyalBlue)
                                 )
                             }
 
                             if (isStockTrackingEnabled) {
-                                Spacer(modifier = Modifier.height(14.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -473,16 +644,18 @@ fun AddMedicineWizardScreen(
                                         value = stockQuantityStr,
                                         onValueChange = { stockQuantityStr = it },
                                         label = { Text("Current Stock") },
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                         singleLine = true,
-                                        shape = RoundedCornerShape(12.dp),
+                                        shape = RoundedCornerShape(14.dp),
                                         modifier = Modifier.weight(1f)
                                     )
                                     OutlinedTextField(
                                         value = stockThresholdStr,
                                         onValueChange = { stockThresholdStr = it },
                                         label = { Text("Alert Below") },
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                         singleLine = true,
-                                        shape = RoundedCornerShape(12.dp),
+                                        shape = RoundedCornerShape(14.dp),
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
@@ -490,6 +663,139 @@ fun AddMedicineWizardScreen(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WizardStepIndicator(currentStep: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val steps = listOf("Details", "Schedule", "Instructions")
+        steps.forEachIndexed { index, title ->
+            val stepNumber = index + 1
+            val isCompleted = stepNumber < currentStep
+            val isActive = stepNumber == currentStep
+
+            val circleColor by animateColorAsState(
+                targetValue = when {
+                    isCompleted -> StatusTaken
+                    isActive -> RoyalBlue
+                    else -> CleanSurfaceVariant
+                },
+                label = "circleColor"
+            )
+
+            val textColor = when {
+                isCompleted || isActive -> PureWhite
+                else -> NavyTypographyMuted
+            }
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f)
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = circleColor,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        if (isCompleted) {
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = null,
+                                tint = PureWhite,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        } else {
+                            Text(
+                                text = "$stepNumber",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = textColor
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = title,
+                    fontSize = 11.sp,
+                    fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
+                    color = if (isActive) RoyalBlue else NavyTypographyMuted
+                )
+            }
+
+            if (index < steps.size - 1) {
+                Box(
+                    modifier = Modifier
+                        .weight(0.8f)
+                        .height(3.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(if (stepNumber < currentStep) StatusTaken else CleanSurfaceVariant)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FormTypeCard(
+    name: String,
+    icon: ImageVector,
+    desc: String,
+    isSelected: Boolean,
+    onSelect: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) SoftBlue else MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(
+            if (isSelected) 1.5.dp else 1.dp,
+            if (isSelected) RoyalBlue else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+        ),
+        modifier = modifier.clickable { onSelect() }
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = if (isSelected) RoyalBlue else CleanSurfaceVariant,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = if (isSelected) PureWhite else RoyalBlue,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Column {
+                Text(
+                    text = name,
+                    fontSize = 14.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    color = if (isSelected) DeepNavy else MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = desc,
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

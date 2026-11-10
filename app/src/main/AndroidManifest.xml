@@ -47,7 +47,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- Notification Action Receiver (Taken, Snooze, Skip) -->
+        <!-- Notification Action Receiver (Taken, Snooze, Skip, Stop Alarm) -->
         <receiver
             android:name=".core.notifications.NotificationActionReceiver"
             android:exported="false">
@@ -55,6 +55,7 @@
                 <action android:name="com.example.meditime.ACTION_DOSE_TAKEN" />
                 <action android:name="com.example.meditime.ACTION_DOSE_SNOOZE" />
                 <action android:name="com.example.meditime.ACTION_DOSE_SKIP" />
+                <action android:name="com.example.meditime.ACTION_STOP_ALARM" />
             </intent-filter>
         </receiver>
 

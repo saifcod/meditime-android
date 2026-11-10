@@ -3,13 +3,16 @@ package com.example.core.reminders
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import com.example.core.notifications.NotificationHelper
+import com.example.core.sound.AlarmSoundManager
 import com.example.data.local.MediTimeDatabase
 import com.example.data.local.entities.DoseRecord
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -26,22 +29,37 @@ class AlarmReceiver : BroadcastReceiver() {
 
         Log.d("AlarmReceiver", "Triggered alarm for medicine: $medicineName, scheduleId: $scheduleId")
 
-        // 1. Show notification immediately
-        NotificationHelper.showDoseReminderNotification(
+        // 1. Play audible medication alarm sound & vibration immediately
+        AlarmSoundManager.startAlarm(
             context = context,
-            medicineId = medicineId,
-            scheduleId = scheduleId,
-            scheduledTimeMillis = scheduledTimeMillis,
-            medicineName = medicineName,
-            doseInstruction = doseInstruction,
-            foodInstruction = foodInstruction
+            medicineName = medicineName
         )
 
-        // 2. Validate against database and record a SCHEDULED dose if not present, and reschedule next recurrence
+        // 2. Validate against database, show notification, handle senior mode, and reschedule next recurrence
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val db = MediTimeDatabase.getDatabase(context)
+                val userProfile = db.dao().getUserProfileOnce()
+                val isSenior = userProfile?.seniorMode == true
+
+                // Show notification with senior mode support
+                NotificationHelper.showDoseReminderNotification(
+                    context = context,
+                    medicineId = medicineId,
+                    scheduleId = scheduleId,
+                    scheduledTimeMillis = scheduledTimeMillis,
+                    medicineName = medicineName,
+                    doseInstruction = doseInstruction,
+                    foodInstruction = foodInstruction,
+                    isSeniorMode = isSenior
+                )
+
+                // Optional spoken reminder for senior mode
+                if (isSenior && userProfile.voiceRemindersEnabled) {
+                    speakAlarmAloud(context, "Time to take your $medicineName. $doseInstruction.")
+                }
+
                 val medicine = db.dao().getMedicineById(medicineId)
                 if (medicine != null && medicine.isActive) {
                     val existing = db.dao().findDoseRecord(medicineId, scheduleId, scheduledTimeMillis)
@@ -77,6 +95,16 @@ class AlarmReceiver : BroadcastReceiver() {
                 Log.e("AlarmReceiver", "Error processing alarm record", e)
             } finally {
                 pendingResult.finish()
+            }
+        }
+    }
+
+    private fun speakAlarmAloud(context: Context, text: String) {
+        var tts: TextToSpeech? = null
+        tts = TextToSpeech(context.applicationContext) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                tts?.language = Locale.getDefault()
+                tts?.speak(text, TextToSpeech.QUEUE_ADD, null, "alarm_speak_id")
             }
         }
     }

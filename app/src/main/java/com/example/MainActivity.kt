@@ -30,7 +30,7 @@ import com.example.ui.navigation.NavigationState
 import com.example.ui.navigation.Screen
 import com.example.ui.navigation.rememberNavigationState
 import com.example.ui.screens.*
-import com.example.ui.theme.MediTimeTheme
+import com.example.ui.theme.*
 
 class MainActivity : ComponentActivity() {
 
@@ -119,8 +119,17 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .testTag("bottom_nav_bar")
                                     .windowInsetsPadding(WindowInsets.navigationBars),
-                                tonalElevation = 8.dp
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                tonalElevation = 6.dp
                             ) {
+                                val itemColors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = RoyalBlue,
+                                    selectedTextColor = RoyalBlue,
+                                    indicatorColor = SoftBlue,
+                                    unselectedIconColor = NavyTypographyMuted,
+                                    unselectedTextColor = NavyTypographyMuted
+                                )
+
                                 NavigationBarItem(
                                     icon = {
                                         Icon(
@@ -131,6 +140,7 @@ class MainActivity : ComponentActivity() {
                                     label = { Text("Home", fontSize = if (isSenior) 15.sp else 12.sp, fontWeight = FontWeight.Bold) },
                                     selected = navState.currentScreen == Screen.DASHBOARD,
                                     onClick = { navState.navigateTo(Screen.DASHBOARD) },
+                                    colors = itemColors,
                                     modifier = Modifier.testTag("nav_item_home")
                                 )
 
@@ -144,6 +154,7 @@ class MainActivity : ComponentActivity() {
                                     label = { Text("Medicines", fontSize = if (isSenior) 15.sp else 12.sp, fontWeight = FontWeight.Bold) },
                                     selected = navState.currentScreen == Screen.MEDICINES,
                                     onClick = { navState.navigateTo(Screen.MEDICINES) },
+                                    colors = itemColors,
                                     modifier = Modifier.testTag("nav_item_medicines")
                                 )
 
@@ -157,6 +168,7 @@ class MainActivity : ComponentActivity() {
                                     label = { Text("Schedule", fontSize = if (isSenior) 15.sp else 12.sp, fontWeight = FontWeight.Bold) },
                                     selected = navState.currentScreen == Screen.SCHEDULE,
                                     onClick = { navState.navigateTo(Screen.SCHEDULE) },
+                                    colors = itemColors,
                                     modifier = Modifier.testTag("nav_item_schedule")
                                 )
 
@@ -170,6 +182,7 @@ class MainActivity : ComponentActivity() {
                                     label = { Text("History", fontSize = if (isSenior) 15.sp else 12.sp, fontWeight = FontWeight.Bold) },
                                     selected = navState.currentScreen == Screen.HISTORY,
                                     onClick = { navState.navigateTo(Screen.HISTORY) },
+                                    colors = itemColors,
                                     modifier = Modifier.testTag("nav_item_history")
                                 )
 
@@ -183,6 +196,7 @@ class MainActivity : ComponentActivity() {
                                     label = { Text("Settings", fontSize = if (isSenior) 15.sp else 12.sp, fontWeight = FontWeight.Bold) },
                                     selected = navState.currentScreen == Screen.SETTINGS,
                                     onClick = { navState.navigateTo(Screen.SETTINGS) },
+                                    colors = itemColors,
                                     modifier = Modifier.testTag("nav_item_settings")
                                 )
                             }
@@ -214,7 +228,8 @@ class MainActivity : ComponentActivity() {
                                             onNavigateToAddMedicine = { navState.openAddMedicineWizard() },
                                             onNavigateToMedicines = { navState.navigateTo(Screen.MEDICINES) },
                                             onNavigateToSchedule = { navState.navigateTo(Screen.SCHEDULE) },
-                                            onNavigateToHistory = { navState.navigateTo(Screen.HISTORY) }
+                                            onNavigateToHistory = { navState.navigateTo(Screen.HISTORY) },
+                                            onNavigateToSettings = { navState.navigateTo(Screen.SETTINGS) }
                                         )
                                     }
                                     Screen.MEDICINES -> {
@@ -245,12 +260,20 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
                                     Screen.SETTINGS -> {
+                                        val alarmPrefs by viewModel.alarmPreferences.collectAsStateWithLifecycle()
                                         SettingsScreen(
                                             userProfile = userProfile,
+                                            alarmPreferences = alarmPrefs,
                                             onToggleNightMode = { viewModel.toggleNightMode(it) },
                                             onToggleSeniorMode = { viewModel.toggleSeniorMode(it) },
-                                            onToggleSound = { viewModel.toggleSound(it) },
-                                            onToggleVibration = { viewModel.toggleVibration(it) },
+                                            onToggleAudibleAlarm = { viewModel.setAudibleAlarmEnabled(it) },
+                                            onSelectAlarmTone = { viewModel.setSelectedAlarmTone(it) },
+                                            onSetCustomAudio = { uri, title -> viewModel.setCustomAlarmAudio(uri, title) },
+                                            onPreviewAlarmTone = { tone, uri -> viewModel.previewAlarmTone(tone, uri) },
+                                            onToggleVibration = { viewModel.setAlarmVibrationEnabled(it) },
+                                            onSetSnoozeDuration = { viewModel.setSnoozeDurationMinutes(it) },
+                                            onSetMaxAlarmDuration = { viewModel.setMaxAlarmDurationSeconds(it) },
+                                            onTriggerTestAlarm = { viewModel.triggerTestAlarm() },
                                             onToggleVoice = { viewModel.toggleVoice(it) },
                                             onDeleteAllData = { viewModel.deleteAllData() }
                                         )

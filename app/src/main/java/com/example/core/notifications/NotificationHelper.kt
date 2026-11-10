@@ -15,22 +15,25 @@ import com.example.R
 import com.example.core.reminders.ReminderEngine
 
 object NotificationHelper {
-    const val CHANNEL_ID_REMINDERS = "meditime_reminders_channel_v1"
+    const val CHANNEL_ID_REMINDERS = "meditime_reminders_channel_v2"
     const val CHANNEL_ID_MISSED = "meditime_missed_channel_v1"
 
     const val ACTION_DOSE_TAKEN = "com.example.meditime.ACTION_DOSE_TAKEN"
     const val ACTION_DOSE_SNOOZE = "com.example.meditime.ACTION_DOSE_SNOOZE"
     const val ACTION_DOSE_SKIP = "com.example.meditime.ACTION_DOSE_SKIP"
+    const val ACTION_STOP_ALARM = "com.example.meditime.ACTION_STOP_ALARM"
 
     fun createNotificationChannels(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
 
-            // Channel 1: High Priority Medicine Reminders
-            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            // Channel 1: High Priority Medicine Reminders with Alarm Attributes
+            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
             val audioAttributes = AudioAttributes.Builder()
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT)
+                .setUsage(AudioAttributes.USAGE_ALARM)
                 .build()
 
             val reminderChannel = NotificationChannel(
@@ -42,7 +45,9 @@ object NotificationHelper {
                 enableLights(true)
                 lightColor = Color.BLUE
                 enableVibration(true)
+                vibrationPattern = longArrayOf(0, 500, 200, 500, 1000)
                 setSound(soundUri, audioAttributes)
+                lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
             }
 
             // Channel 2: Missed Dose Warnings
@@ -66,7 +71,8 @@ object NotificationHelper {
         scheduledTimeMillis: Long,
         medicineName: String,
         doseInstruction: String,
-        foodInstruction: String
+        foodInstruction: String,
+        isSeniorMode: Boolean = false
     ) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
 
@@ -81,7 +87,7 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Action: Taken
+        // Action 1: TAKEN (Stops alarm + marks dose Taken)
         val takenIntent = Intent(context, NotificationActionReceiver::class.java).apply {
             action = ACTION_DOSE_TAKEN
             putExtra(ReminderEngine.EXTRA_MEDICINE_ID, medicineId)
@@ -96,7 +102,7 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Action: Snooze 10m
+        // Action 2: SNOOZE 10 MIN (Stops current alarm + schedules 10m reminder)
         val snoozeIntent = Intent(context, NotificationActionReceiver::class.java).apply {
             action = ACTION_DOSE_SNOOZE
             putExtra(ReminderEngine.EXTRA_MEDICINE_ID, medicineId)
@@ -113,7 +119,7 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Action: Skip
+        // Action 3: SKIP (Stops alarm + marks dose Skipped)
         val skipIntent = Intent(context, NotificationActionReceiver::class.java).apply {
             action = ACTION_DOSE_SKIP
             putExtra(ReminderEngine.EXTRA_MEDICINE_ID, medicineId)
@@ -128,25 +134,54 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // Action 4: STOP ALARM (Stops sound without recording Taken yet)
+        val stopAlarmIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+            action = ACTION_STOP_ALARM
+            putExtra(ReminderEngine.EXTRA_MEDICINE_ID, medicineId)
+            putExtra(ReminderEngine.EXTRA_SCHEDULE_ID, scheduleId)
+            putExtra(ReminderEngine.EXTRA_SCHEDULED_TIME_MILLIS, scheduledTimeMillis)
+            putExtra(ReminderEngine.EXTRA_MEDICINE_NAME, medicineName)
+        }
+        val stopAlarmPendingIntent = PendingIntent.getBroadcast(
+            context,
+            (scheduleId * 10 + 4).toInt(),
+            stopAlarmIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val instructionText = if (foodInstruction.isNotBlank()) {
             "$doseInstruction • $foodInstruction"
         } else {
             doseInstruction
         }
 
+        val titleText = if (isSeniorMode) {
+            "⏰ TIME TO TAKE: $medicineName"
+        } else {
+            "Time to take $medicineName"
+        }
+
+        val bigText = if (isSeniorMode) {
+            "MEDICINE ALARM: $medicineName\nDOSE: $instructionText\nPlease take your medicine now or press Snooze."
+        } else {
+            "$medicineName\n$instructionText\nScheduled dosage reminder."
+        }
+
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_REMINDERS)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Time to take $medicineName")
+            .setContentTitle(titleText)
             .setContentText(instructionText)
-            .setStyle(NotificationCompat.BigTextStyle().bigText("$medicineName\n$instructionText\nScheduled dosage reminder."))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(bigText))
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(contentPendingIntent)
-            .setAutoCancel(true)
-            .addAction(0, "✓ Taken", takenPendingIntent)
-            .addAction(0, "⏰ Snooze 10m", snoozePendingIntent)
-            .addAction(0, "✕ Skip", skipPendingIntent)
+            .setOngoing(true) // Kept ongoing while alarm rings
+            .setAutoCancel(false)
+            .addAction(0, "✓ TAKEN", takenPendingIntent)
+            .addAction(0, "⏰ SNOOZE 10m", snoozePendingIntent)
+            .addAction(0, "✕ SKIP", skipPendingIntent)
+            .addAction(0, "⏹ STOP ALARM", stopAlarmPendingIntent)
             .build()
 
         notificationManager.notify(scheduleId.toInt(), notification)

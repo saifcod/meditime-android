@@ -1,6 +1,9 @@
 package com.example.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,7 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -35,7 +40,8 @@ fun OnboardingScreen(
                     .fillMaxWidth()
                     .navigationBarsPadding(),
                 color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 4.dp
+                tonalElevation = 6.dp,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
             ) {
                 Row(
                     modifier = Modifier
@@ -48,17 +54,19 @@ fun OnboardingScreen(
                         OutlinedButton(
                             onClick = { step-- },
                             modifier = Modifier
-                                .height(56.dp)
+                                .height(52.dp)
                                 .testTag("btn_onboarding_back"),
                             shape = RoundedCornerShape(16.dp)
                         ) {
-                            Text("Back", fontSize = 16.sp)
+                            Icon(Icons.Default.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Back", fontSize = 15.sp, fontWeight = FontWeight.Bold)
                         }
                     } else {
                         Spacer(modifier = Modifier.width(80.dp))
                     }
 
-                    // Dots indicator
+                    // Progress Dots Indicator
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         for (i in 1..4) {
                             Box(
@@ -66,8 +74,8 @@ fun OnboardingScreen(
                                     .size(if (i == step) 12.dp else 8.dp)
                                     .clip(CircleShape)
                                     .background(
-                                        if (i == step) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                        if (i == step) RoyalBlue
+                                        else RoyalBlue.copy(alpha = 0.2f)
                                     )
                             )
                         }
@@ -82,17 +90,24 @@ fun OnboardingScreen(
                             }
                         },
                         modifier = Modifier
-                            .height(56.dp)
+                            .height(52.dp)
                             .testTag("btn_onboarding_next"),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
+                            containerColor = RoyalBlue,
+                            contentColor = PureWhite
                         )
                     ) {
                         Text(
                             text = if (step == 4) "Get Started" else "Next",
-                            fontSize = 16.sp,
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(
+                            imageVector = if (step == 4) Icons.Default.Check else Icons.Default.ArrowForward,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 }
@@ -132,57 +147,76 @@ private fun StepWelcome() {
     ) {
         Surface(
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.primaryContainer,
-            modifier = Modifier.size(110.dp)
+            color = SoftBlue,
+            modifier = Modifier
+                .size(116.dp)
+                .shadow(12.dp, shape = CircleShape, spotColor = RoyalBlue.copy(alpha = 0.3f))
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = Icons.Default.MedicalServices,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(56.dp)
+                    tint = RoyalBlue,
+                    modifier = Modifier.size(58.dp)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
         Text(
             text = "Welcome to MediTime",
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.displayMedium,
             fontWeight = FontWeight.ExtraBold,
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = "\"Never Miss Your Medicine Again.\"",
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold,
+            color = RoyalBlue,
+            fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+            shape = RoundedCornerShape(22.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Text(
-                    text = "🔒 100% Offline & Private",
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "No account needed. Your health data stays safe and secure right on your device.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Row(
+                modifier = Modifier.padding(18.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = StatusTakenContainer,
+                    modifier = Modifier.size(44.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.Lock, contentDescription = null, tint = StatusTaken, modifier = Modifier.size(22.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column {
+                    Text(
+                        text = "100% Offline & Private",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "No login required. Your medical data stays strictly on your device.",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
@@ -196,45 +230,52 @@ private fun StepHowItWorks() {
     ) {
         Text(
             text = "How MediTime Works",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.ExtraBold,
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
-            text = "Powerful medication tracking made effortlessly simple",
+            text = "Medication tracking made effortlessly dependable",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 24.dp, top = 4.dp)
+            modifier = Modifier.padding(bottom = 20.dp, top = 4.dp)
         )
 
         val items = listOf(
-            Triple(Icons.Default.Medication, "1. Add Prescribed Medicines", "Enter tablet name, dose amount, and food instructions"),
-            Triple(Icons.Default.Alarm, "2. Set Reminder Times", "Choose exact daily alarm times with precision timing"),
-            Triple(Icons.Default.NotificationsActive, "3. Automatic Notifications", "Clear alerts with quick Taken, Snooze, or Skip buttons"),
-            Triple(Icons.Default.Assessment, "4. Track History & Refills", "Keep an accurate log for yourself and your doctor")
+            Triple(Icons.Default.Medication, "1. Add Prescriptions", "Enter medicine name, dose count, and food timings"),
+            Triple(Icons.Default.Alarm, "2. Set Reminder Alarms", "Exact daily alarms wake your device on schedule"),
+            Triple(Icons.Default.VolumeUp, "3. Audible Alert & Actions", "Distinctive alarm with instant Taken, Snooze, or Skip"),
+            Triple(Icons.Default.Assessment, "4. Dose Logs & Adherence", "Audit history ready for doctor review")
         )
 
         items.forEach { (icon, title, desc) ->
-            Row(
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 10.dp),
-                verticalAlignment = Alignment.Top
+                    .padding(vertical = 5.dp)
             ) {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(44.dp)
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Surface(
+                        shape = CircleShape,
+                        color = SoftBlue,
+                        modifier = Modifier.size(42.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(icon, contentDescription = null, tint = RoyalBlue, modifier = Modifier.size(22.dp))
+                        }
                     }
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onBackground)
-                    Text(desc, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column {
+                        Text(title, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onBackground)
+                        Text(desc, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         }
@@ -252,12 +293,12 @@ private fun StepChooseMode(
     ) {
         Text(
             text = "Choose Your Experience",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.ExtraBold,
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
-            text = "You can always change this anytime in Settings",
+            text = "Can be changed anytime in Settings",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 20.dp, top = 4.dp)
@@ -266,35 +307,55 @@ private fun StepChooseMode(
         // Senior Mode Card
         Card(
             onClick = { onSelect(true) },
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(22.dp),
             colors = CardDefaults.cardColors(
-                containerColor = if (isSenior) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+                containerColor = if (isSenior) SoftBlue else MaterialTheme.colorScheme.surface
             ),
-            border = if (isSenior) CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary)) else null,
+            border = BorderStroke(
+                if (isSenior) 2.dp else 1.dp,
+                if (isSenior) RoyalBlue else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
                 .testTag("mode_senior")
         ) {
             Row(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier.padding(18.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 RadioButton(
                     selected = isSenior,
-                    onClick = { onSelect(true) }
+                    onClick = { onSelect(true) },
+                    colors = RadioButtonDefaults.colors(selectedColor = RoyalBlue)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Senior Care Mode",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 18.sp,
+                            color = if (isSenior) DeepNavy else MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = StatusTakenContainer
+                        ) {
+                            Text(
+                                text = "RECOMMENDED",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = StatusTaken,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "👴 Senior Mode (High Legibility)",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Text(
-                        text = "Extra-large buttons, high contrast text, simplified screens, and spoken audio reminders.",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = "Extra-large buttons, high contrast, spoken voice medicine announcements, and simple screens.",
+                        fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -304,35 +365,40 @@ private fun StepChooseMode(
         // Standard Mode Card
         Card(
             onClick = { onSelect(false) },
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(22.dp),
             colors = CardDefaults.cardColors(
-                containerColor = if (!isSenior) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+                containerColor = if (!isSenior) SoftBlue else MaterialTheme.colorScheme.surface
             ),
-            border = if (!isSenior) CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary)) else null,
+            border = BorderStroke(
+                if (!isSenior) 2.dp else 1.dp,
+                if (!isSenior) RoyalBlue else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
                 .testTag("mode_standard")
         ) {
             Row(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier.padding(18.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 RadioButton(
                     selected = !isSenior,
-                    onClick = { onSelect(false) }
+                    onClick = { onSelect(false) },
+                    colors = RadioButtonDefaults.colors(selectedColor = RoyalBlue)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "📱 Standard Mode",
-                        fontWeight = FontWeight.Bold,
+                        text = "Standard Mode",
+                        fontWeight = FontWeight.ExtraBold,
                         fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onBackground
+                        color = if (!isSenior) DeepNavy else MaterialTheme.colorScheme.onBackground
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Modern compact cards, detailed statistics, schedule timeline, and comprehensive medicine reports.",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = "Compact statistics cards, schedule timeline, and comprehensive medicine reports.",
+                        fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -353,12 +419,12 @@ private fun StepPreferences(
     ) {
         Text(
             text = "Personalize MediTime",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.ExtraBold,
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
-            text = "Optional details to tailor your experience",
+            text = "Tell us how you'd like MediTime to address you",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 24.dp, top = 4.dp)
@@ -369,6 +435,7 @@ private fun StepPreferences(
             onValueChange = onNameChange,
             label = { Text("What is your name? (Optional)") },
             placeholder = { Text("e.g. Grandma Rose, Alex") },
+            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = RoyalBlue) },
             singleLine = true,
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier
@@ -376,25 +443,43 @@ private fun StepPreferences(
                 .testTag("input_onboarding_name")
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "🔔 Reminder Permissions",
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "MediTime uses exact alarms and high-priority notifications to make sure medicine reminders arrive on the exact second, even when your phone is asleep.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Row(
+                modifier = Modifier.padding(18.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = SoftBlue,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.Alarm, contentDescription = null, tint = RoyalBlue, modifier = Modifier.size(20.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column {
+                    Text(
+                        text = "Precise Alarms & Notifications",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "MediTime uses exact alarms and full-screen audible alerts so you never miss a dose, even when your device is locked or in battery saving mode.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp
+                    )
+                }
             }
         }
     }

@@ -5,10 +5,13 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.example.core.reminders.ReminderEngine
+import com.example.core.sound.AlarmPreferencesRepository
+import com.example.core.sound.AlarmSoundManager
 import com.example.data.local.MediTimeDatabase
 import com.example.data.local.entities.DoseRecord
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class NotificationActionReceiver : BroadcastReceiver() {
@@ -18,6 +21,9 @@ class NotificationActionReceiver : BroadcastReceiver() {
         val scheduleId = intent.getLongExtra(ReminderEngine.EXTRA_SCHEDULE_ID, -1L)
         val scheduledTimeMillis = intent.getLongExtra(ReminderEngine.EXTRA_SCHEDULED_TIME_MILLIS, System.currentTimeMillis())
         val medicineName = intent.getStringExtra(ReminderEngine.EXTRA_MEDICINE_NAME) ?: "Medicine"
+
+        // Always stop alarm audio playback immediately on any action
+        AlarmSoundManager.stopAlarm(context)
 
         // Dismiss notification
         NotificationHelper.dismissNotification(context, scheduleId.toInt())
@@ -74,7 +80,11 @@ class NotificationActionReceiver : BroadcastReceiver() {
                     }
 
                     NotificationHelper.ACTION_DOSE_SNOOZE -> {
-                        val snoozeMillis = System.currentTimeMillis() + 10 * 60 * 1000L // 10 minutes
+                        val repo = AlarmPreferencesRepository(context)
+                        val prefs = repo.alarmPreferencesFlow.first()
+                        val snoozeMinutes = prefs.snoozeDurationMinutes.coerceAtLeast(5)
+                        val snoozeMillis = System.currentTimeMillis() + snoozeMinutes * 60 * 1000L
+
                         val med = db.dao().getMedicineById(medicineId)
                         if (med != null) {
                             val dummySchedule = db.dao().getSchedulesForMedicineOnce(medicineId).firstOrNull { it.id == scheduleId }
@@ -82,7 +92,12 @@ class NotificationActionReceiver : BroadcastReceiver() {
                                 ReminderEngine.scheduleAlarm(context, med, dummySchedule, snoozeMillis)
                             }
                         }
-                        Log.d("NotificationAction", "Snoozed dose 10m for $medicineName")
+                        Log.d("NotificationAction", "Snoozed dose $snoozeMinutes m for $medicineName")
+                    }
+
+                    NotificationHelper.ACTION_STOP_ALARM -> {
+                        // Stop sound without marking medicine as taken or skipped
+                        Log.d("NotificationAction", "Stopped alarm sound for $medicineName without altering dose record")
                     }
                 }
             } catch (e: Exception) {

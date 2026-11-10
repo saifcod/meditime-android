@@ -1,6 +1,6 @@
 package com.example.ui.screens
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,10 +9,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -33,18 +35,28 @@ fun ScheduleManagementScreen(
     onDeleteSchedule: (MedicationSchedule) -> Unit,
     onAddNewSchedule: () -> Unit
 ) {
+    val activeCount = schedules.count { it.isEnabled }
+
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddNewSchedule,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White,
-                shape = RoundedCornerShape(18.dp),
+                containerColor = RoyalBlue,
+                contentColor = PureWhite,
+                shape = RoundedCornerShape(20.dp),
                 modifier = Modifier
                     .padding(bottom = 72.dp)
+                    .shadow(8.dp, shape = RoundedCornerShape(20.dp), spotColor = RoyalBlue.copy(alpha = 0.4f))
                     .testTag("fab_add_schedule")
             ) {
-                Icon(Icons.Default.AddAlarm, contentDescription = "Add Schedule")
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.AddAlarm, contentDescription = "Add Schedule")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Add Schedule", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                }
             }
         }
     ) { innerPadding ->
@@ -52,58 +64,113 @@ fun ScheduleManagementScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .padding(horizontal = 20.dp, vertical = 14.dp)
         ) {
-            Text(
-                text = "Reminder Schedule",
-                fontSize = if (isSeniorMode) 28.sp else 24.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                text = "${schedules.count { it.isEnabled }} active reminders scheduled",
-                fontSize = if (isSeniorMode) 16.sp else 13.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Medication Schedule",
+                        fontSize = if (isSeniorMode) 28.sp else 24.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Text(
+                        text = "$activeCount active alarms configured",
+                        fontSize = if (isSeniorMode) 16.sp else 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = SoftBlue
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Alarm,
+                            contentDescription = null,
+                            tint = RoyalBlue,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "$activeCount Active",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = RoyalBlue
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             if (schedules.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(36.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Surface(
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            modifier = Modifier.size(72.dp)
+                            color = SoftBlue,
+                            modifier = Modifier.size(76.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.Alarm, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp))
+                                Icon(
+                                    Icons.Default.Alarm,
+                                    contentDescription = null,
+                                    tint = RoyalBlue,
+                                    modifier = Modifier.size(38.dp)
+                                )
                             }
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
                         Text(
-                            text = "No schedules created yet",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp,
+                            text = "No schedules set up yet",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = if (isSeniorMode) 20.sp else 17.sp,
                             color = MaterialTheme.colorScheme.onBackground
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Add a medicine or tap + to create custom alarm schedules.",
+                            text = "Create reminder schedules for each dose to receive reliable audible alarms and notifications.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 13.sp
+                            fontSize = 13.sp,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Button(
+                            onClick = onAddNewSchedule,
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Create Schedule", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 80.dp)
+                    contentPadding = PaddingValues(bottom = 100.dp)
                 ) {
                     items(schedules, key = { it.id }) { schedule ->
                         val matchingMed = medicines.firstOrNull { it.id == schedule.medicineId }
@@ -117,27 +184,32 @@ fun ScheduleManagementScreen(
                         val formattedTime = SimpleDateFormat("h:mm a", Locale.getDefault()).format(cal.time)
 
                         Card(
-                            shape = RoundedCornerShape(20.dp),
+                            shape = RoundedCornerShape(22.dp),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            border = BorderStroke(
+                                1.dp,
+                                if (schedule.isEnabled) RoyalBlue.copy(alpha = 0.35f)
+                                else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                            ),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp),
+                                    .padding(18.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Surface(
                                     shape = CircleShape,
-                                    color = if (schedule.isEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                                    modifier = Modifier.size(if (isSeniorMode) 52.dp else 44.dp)
+                                    color = if (schedule.isEnabled) SoftBlue else CleanSurfaceVariant,
+                                    modifier = Modifier.size(if (isSeniorMode) 54.dp else 46.dp)
                                 ) {
                                     Box(contentAlignment = Alignment.Center) {
                                         Icon(
                                             Icons.Default.Alarm,
                                             contentDescription = null,
-                                            tint = if (schedule.isEnabled) MaterialTheme.colorScheme.primary else Color.Gray,
+                                            tint = if (schedule.isEnabled) RoyalBlue else NavyTypographyMuted,
                                             modifier = Modifier.size(if (isSeniorMode) 30.dp else 24.dp)
                                         )
                                     }
@@ -148,13 +220,15 @@ fun ScheduleManagementScreen(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = formattedTime,
-                                        fontSize = if (isSeniorMode) 24.sp else 20.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (schedule.isEnabled) MaterialTheme.colorScheme.onSurface else Color.Gray
+                                        fontSize = if (isSeniorMode) 26.sp else 20.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = if (schedule.isEnabled) MaterialTheme.colorScheme.onSurface else NavyTypographyMuted
                                     )
+                                    Spacer(modifier = Modifier.height(2.dp))
                                     Text(
                                         text = "$medName • $doseInfo",
                                         fontSize = if (isSeniorMode) 16.sp else 13.sp,
+                                        fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
@@ -162,11 +236,21 @@ fun ScheduleManagementScreen(
                                 Switch(
                                     checked = schedule.isEnabled,
                                     onCheckedChange = { onToggleSchedule(schedule, it) },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = PureWhite,
+                                        checkedTrackColor = RoyalBlue
+                                    ),
                                     modifier = Modifier.testTag("switch_schedule_${schedule.id}")
                                 )
 
+                                Spacer(modifier = Modifier.width(6.dp))
+
                                 IconButton(onClick = { onDeleteSchedule(schedule) }) {
-                                    Icon(Icons.Default.DeleteOutline, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                                    Icon(
+                                        Icons.Outlined.DeleteOutline,
+                                        contentDescription = "Delete",
+                                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                                    )
                                 }
                             }
                         }

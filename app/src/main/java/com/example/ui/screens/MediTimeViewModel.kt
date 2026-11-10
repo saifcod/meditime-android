@@ -7,6 +7,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.MediTimeApplication
 import com.example.core.reminders.ReminderEngine
+import com.example.core.sound.AlarmPreferences
+import com.example.core.sound.AlarmPreferencesRepository
+import com.example.core.sound.AlarmSoundManager
+import com.example.core.sound.AlarmTone
 import com.example.data.local.entities.DoseRecord
 import com.example.data.local.entities.MedicationSchedule
 import com.example.data.local.entities.Medicine
@@ -22,6 +26,7 @@ import java.util.*
 class MediTimeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = (application as MediTimeApplication).repository
+    val alarmPreferencesRepository = AlarmPreferencesRepository(application)
 
     val userProfile: StateFlow<UserProfile?> = repository.userProfile
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -35,6 +40,9 @@ class MediTimeViewModel(application: Application) : AndroidViewModel(application
 
     val historyRecords: StateFlow<List<DoseRecord>> = repository.recentHistory
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val alarmPreferences: StateFlow<AlarmPreferences> = alarmPreferencesRepository.alarmPreferencesFlow
+        .stateIn(viewModelScope, SharingStarted.Eagerly, AlarmPreferences())
 
     private var tts: TextToSpeech? = null
     private var isTtsInitialized = false
@@ -234,6 +242,7 @@ class MediTimeViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun markDoseTaken(dose: DoseRecord) {
+        AlarmSoundManager.stopAlarm(getApplication())
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val now = System.currentTimeMillis()
@@ -254,6 +263,7 @@ class MediTimeViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun markDoseSkipped(dose: DoseRecord) {
+        AlarmSoundManager.stopAlarm(getApplication())
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val now = System.currentTimeMillis()
@@ -266,6 +276,7 @@ class MediTimeViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun snoozeDose(dose: DoseRecord, minutes: Int = 10) {
+        AlarmSoundManager.stopAlarm(getApplication())
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val snoozeMillis = System.currentTimeMillis() + minutes * 60 * 1000L
@@ -280,6 +291,10 @@ class MediTimeViewModel(application: Application) : AndroidViewModel(application
                 Log.e("MediTimeVM", "Error snoozing dose", e)
             }
         }
+    }
+
+    fun stopAlarmSoundOnly() {
+        AlarmSoundManager.stopAlarm(getApplication())
     }
 
     fun updateMedicineStock(medicine: Medicine, newStock: Int) {
@@ -314,11 +329,63 @@ class MediTimeViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    // --- Smart Medication Alarm Settings ---
+
+    fun setAudibleAlarmEnabled(enabled: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            alarmPreferencesRepository.setAudibleAlarmEnabled(enabled)
+        }
+    }
+
+    fun setSelectedAlarmTone(tone: AlarmTone) {
+        viewModelScope.launch(Dispatchers.IO) {
+            alarmPreferencesRepository.setSelectedTone(tone)
+        }
+    }
+
+    fun setCustomAlarmAudio(uri: String, title: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            alarmPreferencesRepository.setCustomAudio(uri, title)
+        }
+    }
+
+    fun previewAlarmTone(tone: AlarmTone, customUri: String? = null, onFinished: () -> Unit = {}) {
+        AlarmSoundManager.previewTone(getApplication(), tone, customUri, onFinished)
+    }
+
+    fun setAlarmVibrationEnabled(enabled: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            alarmPreferencesRepository.setVibrationEnabled(enabled)
+        }
+    }
+
+    fun setSnoozeDurationMinutes(minutes: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            alarmPreferencesRepository.setSnoozeDuration(minutes)
+        }
+    }
+
+    fun setMaxAlarmDurationSeconds(seconds: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            alarmPreferencesRepository.setMaxAlarmDuration(seconds)
+        }
+    }
+
+    fun triggerTestAlarm() {
+        val activeMedName = medicines.value.firstOrNull()?.name ?: "Sample Medicine"
+        AlarmSoundManager.startAlarm(
+            context = getApplication(),
+            medicineName = activeMedName,
+            timeoutSeconds = 20
+        )
+    }
+
     fun toggleSound(enabled: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val profile = userProfile.value ?: UserProfile()
                 repository.saveUserProfile(profile.copy(soundEnabled = enabled))
+                setAudibleAlarmEnabled(enabled)
             } catch (e: Exception) {
                 Log.e("MediTimeVM", "Error toggling sound", e)
             }
@@ -330,6 +397,7 @@ class MediTimeViewModel(application: Application) : AndroidViewModel(application
             try {
                 val profile = userProfile.value ?: UserProfile()
                 repository.saveUserProfile(profile.copy(vibrationEnabled = enabled))
+                setAlarmVibrationEnabled(enabled)
             } catch (e: Exception) {
                 Log.e("MediTimeVM", "Error toggling vibration", e)
             }
@@ -364,10 +432,11 @@ class MediTimeViewModel(application: Application) : AndroidViewModel(application
     override fun onCleared() {
         super.onCleared()
         try {
+            AlarmSoundManager.stopAlarm(getApplication())
             tts?.stop()
             tts?.shutdown()
         } catch (e: Exception) {
-            Log.e("MediTimeVM", "Error shutting down TTS", e)
+            Log.e("MediTimeVM", "Error shutting down resources", e)
         }
     }
 }
